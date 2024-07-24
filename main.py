@@ -27,4 +27,4 @@ async def on_ready():
 	print(f"Logged in as: {bot.user.name}")
 
 if __name__ == '__main__':
-	bot.run("MTI2MzAyNzQzNDM3OTU0MjU4MA.GLAnOy._tzRAZxYoWV1WphNFMs8a4YKN1rhpGYpCNj0wA")
+	bot.run("PASTE YOUR BOT TOKEN HERE")
