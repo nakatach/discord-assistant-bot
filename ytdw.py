@@ -15,10 +15,10 @@ class YTDownloader(commands.Cog):
             cookies_file = 'www.youtube.com_cookies.txt'
 
             ydl_opts = {
-                'format': 'bestaudio/best',  # Get the best available audio format
+                'format': 'bestaudio/best',
                 'noplaylist': True,
                 'quiet': True,
-                'cookiefile': cookies_file,  # Specify the path to cookies
+                'cookiefile': cookies_file,
                 'progress_hooks': [self.progress_hook],
             }
 
@@ -27,7 +27,7 @@ class YTDownloader(commands.Cog):
 
             formats = info.get('formats', [])
             resolutions = [f['height'] for f in formats if 'height' in f and f['height'] is not None]
-            resolutions = list(set(resolutions))  # Remove duplicates
+            resolutions = list(set(resolutions))
             resolutions.sort(reverse=True)
 
             resolution_message = "Available resolutions:\n"
@@ -35,7 +35,6 @@ class YTDownloader(commands.Cog):
                 resolution_message += f"{res}p\n"
             await ctx.send(resolution_message)
             
-            # Ask for resolution
             def check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
 
