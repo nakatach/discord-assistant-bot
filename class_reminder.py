@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 class ClassReminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.class_schedule = {}  # Dictionary untuk menyimpan jadwal kelas
-        self.reminder_time = 15  # Waktu pengingat dalam menit sebelum kelas dimulai
+        self.class_schedule = {}
+        self.reminder_time = 15
         self.check_classes.start()
 
     def cog_unload(self):
@@ -48,7 +48,7 @@ class ClassReminder(commands.Cog):
         if len(self.class_schedule[day]) < initial_count:
             await ctx.send(f"Class at {time} on {day} removed.")
             if not self.class_schedule[day]:
-                del self.class_schedule[day]  # Hapus hari dari dictionary jika tidak ada kelas lagi
+                del self.class_schedule[day]
         else:
             await ctx.send(f"No class found at {time} on {day}.")
 
