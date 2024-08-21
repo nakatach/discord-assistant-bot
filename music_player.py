@@ -20,7 +20,7 @@ class MusicPlayer(commands.Cog):
     def search_youtube(self, query):
         try:
             result = self.ytdl.extract_info(f"ytsearch:{query}", download=False)
-            video = result['entries'][0]  # Ambil hasil pertama dari pencarian
+            video = result['entries'][0]
             return video['webpage_url'], video['title']
         except Exception as e:
             print(f"Error searching on YouTube: {e}")
