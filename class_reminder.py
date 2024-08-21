@@ -5,15 +5,16 @@ from datetime import datetime, timedelta
 class ClassReminder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.class_schedule = {}  # Dictionary untuk menyimpan jadwal kelas
-        self.reminder_time = 15  # Waktu pengingat dalam menit sebelum kelas dimulai
+        self.class_schedule = {}
+        self.reminder_time = 15
+        self.sent_reminders = {}
         self.check_classes.start()
 
     def cog_unload(self):
         self.check_classes.cancel()
 
     @commands.command(name='setclass', help='Set a class schedule. Usage: !setclass <day> <time> <class_name>')
-    async def set_class(self, ctx, day: str, time: str, *, class_name: str):
+    async def set_class(self, ctx, day: str, time: str, class_name: str):
         if day not in self.class_schedule:
             self.class_schedule[day] = []
 
@@ -48,7 +49,7 @@ class ClassReminder(commands.Cog):
         if len(self.class_schedule[day]) < initial_count:
             await ctx.send(f"Class at {time} on {day} removed.")
             if not self.class_schedule[day]:
-                del self.class_schedule[day]  # Hapus hari dari dictionary jika tidak ada kelas lagi
+                del self.class_schedule[day]
         else:
             await ctx.send(f"No class found at {time} on {day}.")
 
@@ -63,10 +64,17 @@ class ClassReminder(commands.Cog):
                 class_time = cls['time']
                 reminder_time = (datetime.combine(now.date(), class_time) - timedelta(minutes=self.reminder_time)).time()
 
+                class_key = f"{current_day}_{class_time.strftime('%H:%M')}_{cls['name']}"
+
                 if reminder_time <= current_time < (datetime.combine(now.date(), class_time) + timedelta(minutes=1)).time():
-                    channel = nextcord.utils.get(self.bot.get_all_channels(), name='general')
-                    if channel:
-                        await channel.send(f"Reminder: Class '{cls['name']}' starts in {self.reminder_time} minutes!")
+                    if class_key not in self.sent_reminders:
+                        channel = nextcord.utils.get(self.bot.get_all_channels(), name='general')
+                        if channel:
+                            await channel.send(f"Reminder: Class '{cls['name']}' starts in {self.reminder_time} minutes!")
+                        self.sent_reminders[class_key] = True
+                elif current_time > (datetime.combine(now.date(), class_time) + timedelta(minutes=1)).time():
+                    if class_key in self.sent_reminders:
+                        del self.sent_reminders[class_key]
 
 def setup(bot):
     bot.add_cog(ClassReminder(bot))
