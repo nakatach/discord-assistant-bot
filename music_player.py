@@ -9,6 +9,8 @@ class MusicPlayer(commands.Cog):
         self.voice_clients = {}
         self.queue = {}
         self.is_playing = {}
+        self.loop_song = {}
+        self.loop_queue = {}
         self.yt_dlp_options = {"format": "bestaudio/best"}
         self.ytdl = yt_dlp.YoutubeDL(self.yt_dlp_options)
         self.ffmpeg_options = {'options': '-vn -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'}
@@ -27,9 +29,16 @@ class MusicPlayer(commands.Cog):
             return None, None
 
     async def play_next(self, ctx):
-        if len(self.queue[ctx.guild.id]) > 0:
+        if self.loop_song.get(ctx.guild.id):
+            url, title = self.queue[ctx.guild.id][0]
+            await self.play_song(ctx, url, title)
+        elif len(self.queue[ctx.guild.id]) > 0:
             url, title = self.queue[ctx.guild.id].pop(0)
             await self.play_song(ctx, url, title)
+        elif self.loop_queue.get(ctx.guild.id):
+            url, title = self.queue[ctx.guild.id][0]
+            self.queue[ctx.guild.id].append((url, title))
+            await self.play_next(ctx)
         else:
             self.is_playing[ctx.guild.id] = False
 
@@ -37,11 +46,8 @@ class MusicPlayer(commands.Cog):
         try:
             loop = asyncio.get_event_loop()
             data = await loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
-
             song = data['url']
-            print(f"Playing song: {song}")
             player = nextcord.FFmpegPCMAudio(song, **self.ffmpeg_options)
-
             self.voice_clients[ctx.guild.id].play(player, after=lambda e: asyncio.run_coroutine_threadsafe(self.play_next(ctx), loop))
             await ctx.send(f"Now playing: {title}")
         except Exception as e:
@@ -64,7 +70,6 @@ class MusicPlayer(commands.Cog):
             try:
                 voice_client = await ctx.author.voice.channel.connect()
                 self.voice_clients[voice_client.guild.id] = voice_client
-                print("Connected to voice channel")
             except Exception as e:
                 print(f"Error connecting to the voice channel: {e}")
                 await ctx.send("Error connecting to the voice channel.")
@@ -131,6 +136,24 @@ class MusicPlayer(commands.Cog):
             await ctx.send(f"Removed from queue: {removed_song[1]}")
         else:
             await ctx.send("Invalid index or empty queue.")
+
+    @commands.command(name="loop_song")
+    async def loop_song(self, ctx):
+        guild_id = ctx.guild.id
+        if guild_id in self.loop_song:
+            self.loop_song[guild_id] = not self.loop_song[guild_id]
+        else:
+            self.loop_song[guild_id] = True
+        await ctx.send(f"Loop song: {'enabled' if self.loop_song[guild_id] else 'disabled'}")
+
+    @commands.command(name="loop_queue")
+    async def loop_queue(self, ctx):
+        guild_id = ctx.guild.id
+        if guild_id in self.loop_queue:
+            self.loop_queue[guild_id] = not self.loop_queue[guild_id]
+        else:
+            self.loop_queue[guild_id] = True
+        await ctx.send(f"Loop queue: {'enabled' if self.loop_queue[guild_id] else 'disabled'}")
 
 def setup(bot):
     bot.add_cog(MusicPlayer(bot))
